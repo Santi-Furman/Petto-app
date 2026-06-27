@@ -1,0 +1,5 @@
+export { RedPanda  } from './RedPanda'
+export { Koala     } from './Koala'
+export { Penguin   } from './Penguin'
+export { Hedgehog  } from './Hedgehog'
+export { Leopard   } from './Leopard'
