@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import {
-  View, Text, TouchableOpacity, StyleSheet,
-  SafeAreaView, FlatList, Dimensions
+  View, Text, TextInput, TouchableOpacity, StyleSheet,
+  SafeAreaView, FlatList, Dimensions, KeyboardAvoidingView, Platform
 } from 'react-native'
 import { router } from 'expo-router'
 import { PetViewer } from '../../components/PetViewer'
@@ -11,22 +11,80 @@ import { PETS } from '../../lib/xp'
 const { width } = Dimensions.get('window')
 
 export default function PickPet() {
+  const [step, setStep]               = useState<'carousel' | 'name'>('carousel')
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [customName, setCustomName]     = useState('')
   const flatListRef = useRef<FlatList>(null)
   const choosePet = usePetStore(s => s.choosePet)
 
   const currentPet = PETS[currentIndex]
-
-  function handleConfirm() {
-    choosePet(currentPet.id as any, currentPet.name)
-    router.replace('/(tabs)/home')
-  }
 
   function handleScroll(e: any) {
     const index = Math.round(e.nativeEvent.contentOffset.x / width)
     setCurrentIndex(index)
   }
 
+  function handleContinue() {
+    setCustomName(currentPet.name)
+    setStep('name')
+  }
+
+  function handleConfirm() {
+    const finalName = customName.trim() || currentPet.name
+    choosePet(currentPet.id as any, finalName)
+    router.replace('/(tabs)/home')
+  }
+
+  // ─── Paso 2: ponerle nombre ───────────────────────────────
+  if (step === 'name') {
+    return (
+      <SafeAreaView style={s.container}>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <View style={s.nameScreen}>
+
+            <TouchableOpacity onPress={() => setStep('carousel')} style={s.backBtn}>
+              <Text style={s.backBtnText}>← Volver</Text>
+            </TouchableOpacity>
+
+            <View style={s.namePetCard}>
+              <PetViewer species={currentPet.id as any} mood="idle" size={180} />
+            </View>
+
+            <Text style={s.nameTitle}>¿Cómo se llama?</Text>
+            <Text style={s.nameSubtitle}>Ponele un nombre a tu {currentPet.type.toLowerCase()}</Text>
+
+            <TextInput
+              style={s.nameInput}
+              value={customName}
+              onChangeText={setCustomName}
+              placeholder={currentPet.name}
+              placeholderTextColor="#C8A880"
+              maxLength={16}
+              autoFocus
+            />
+
+            <View style={s.footer}>
+              <TouchableOpacity
+                style={s.btn}
+                onPress={handleConfirm}
+                activeOpacity={0.8}
+              >
+                <Text style={s.btnText}>
+                  Empezar con {customName.trim() || currentPet.name} 🚀
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+          </View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    )
+  }
+
+  // ─── Paso 1: carrusel de mascotas ─────────────────────────
   return (
     <SafeAreaView style={s.container}>
 
@@ -67,11 +125,11 @@ export default function PickPet() {
         ))}
       </View>
 
-      {/* Botón confirmar */}
+      {/* Botón continuar */}
       <View style={s.footer}>
         <TouchableOpacity
           style={s.btn}
-          onPress={handleConfirm}
+          onPress={handleContinue}
           activeOpacity={0.8}
         >
           <Text style={s.btnText}>
@@ -111,4 +169,21 @@ const s = StyleSheet.create({
   footer:      { padding: 24, paddingBottom: 36 },
   btn:         { backgroundColor: '#FF7A5C', borderRadius: 32, padding: 16, alignItems: 'center' },
   btnText:     { color: 'white', fontSize: 16, fontWeight: '800' },
+
+  // ─── Paso 2: nombre ───────────────────────────────────────
+  nameScreen:   { flex: 1, alignItems: 'center', paddingHorizontal: 28, paddingTop: 12 },
+  backBtn:      { alignSelf: 'flex-start', marginBottom: 12 },
+  backBtnText:  { fontSize: 14, color: '#A08060', fontWeight: '600' },
+
+  namePetCard:  { width: width * 0.6, aspectRatio: 1, backgroundColor: '#FFFAF4',
+                 borderRadius: 32, borderWidth: 1, borderColor: '#F0E0CC',
+                 alignItems: 'center', justifyContent: 'center', marginTop: 12, marginBottom: 24 },
+
+  nameTitle:    { fontSize: 26, fontWeight: '900', color: '#3A2A1A', textAlign: 'center' },
+  nameSubtitle: { fontSize: 14, color: '#A08060', textAlign: 'center', marginTop: 6, marginBottom: 28 },
+
+  nameInput:    { width: '100%', backgroundColor: '#FFFAF4', borderRadius: 18,
+                 borderWidth: 2, borderColor: '#F0E0CC', paddingHorizontal: 20,
+                 paddingVertical: 16, fontSize: 18, fontWeight: '700',
+                 color: '#3A2A1A', textAlign: 'center' },
 })
