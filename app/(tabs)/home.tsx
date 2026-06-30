@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, SafeAreaView
@@ -8,7 +8,10 @@ import { usePetStore } from '../../store/petStore'
 import { SESSION_TYPES, xpProgressInLevel, xpToNextLevel } from '../../lib/xp'
 
 export default function Home() {
-  const { species, petName, mood, xp, level, coins, sessions, logSession, setMood } = usePetStore()
+  const { species, petName, mood, xp, level, coins, sessions, logSession, setMood, removeSession } = usePetStore()
+
+  const [undoTimer, setUndoTimer] = useState<ReturnType<typeof setTimeout> | null>(null)  
+  const [showUndo, setShowUndo]   = useState(false)
 
   // Vuelve a idle después de 3 segundos de happy
   useEffect(() => {
@@ -31,6 +34,19 @@ export default function Home() {
       icon:     st.icon,
       xpEarned: st.xp,
     })
+
+    setShowUndo(true)
+    if (undoTimer) clearTimeout(undoTimer)
+    const timer = setTimeout(() => setShowUndo(false), 5000)
+    setUndoTimer(timer)
+  }
+
+  function handleUndo() {
+    if (sessions[0]) {
+      removeSession(sessions[0].loggedAt)
+    }
+    setShowUndo(false)
+    if (undoTimer) clearTimeout(undoTimer)
   }
 
   return (
@@ -47,6 +63,16 @@ export default function Home() {
             <Text style={s.coinText}>🪙 {coins}</Text>
           </View>
         </View>
+
+        {/* Toast de deshacer */}
+        {showUndo && (
+          <View style={s.undoToast}>
+            <Text style={s.undoText}>Sesión registrada ✓</Text>
+            <TouchableOpacity onPress={handleUndo}>
+              <Text style={s.undoBtn}>Deshacer</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Tarjeta de la mascota */}
         <View style={s.petCard}>
@@ -136,6 +162,12 @@ const s = StyleSheet.create({
   coinBadge:        { backgroundColor: '#FFFAF4', borderRadius: 20, borderWidth: 1,
                       borderColor: '#F0E0CC', paddingHorizontal: 14, paddingVertical: 6 },
   coinText:         { fontSize: 14, fontWeight: '700', color: '#3A2A1A' },
+
+  undoToast:        { backgroundColor: '#3A2A1A', borderRadius: 14, padding: 14,
+                      flexDirection: 'row', justifyContent: 'space-between',
+                      alignItems: 'center', marginBottom: 16 },
+  undoText:         { color: '#FDF6ED', fontSize: 13, fontWeight: '600' },
+  undoBtn:          { color: '#FFE57A', fontSize: 13, fontWeight: '800' },
 
   petCard:          { backgroundColor: '#FFFAF4', borderRadius: 24, borderWidth: 1,
                       borderColor: '#F0E0CC', padding: 20, alignItems: 'center', marginBottom: 24 },
