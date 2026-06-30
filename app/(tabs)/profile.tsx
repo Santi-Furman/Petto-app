@@ -7,7 +7,7 @@ import { usePetStore } from '../../store/petStore'
 import { PETS, xpProgressInLevel, xpToNextLevel } from '../../lib/xp'
 
 export default function Profile() {
-  const { species, petName, xp, level, coins, sessions, choosePet } = usePetStore()
+  const { species, petName, xp, level, coins, sessions, choosePet, removeSession } = usePetStore()
 
   const pet      = PETS.find(p => p.id === species)
   const progress = xpProgressInLevel(xp)
@@ -110,6 +110,12 @@ export default function Profile() {
                     </Text>
                   </View>
                   <Text style={s.historyXp}>+{session.xpEarned} XP</Text>
+                  <TouchableOpacity
+                    onPress={() => removeSession(session.loggedAt)}
+                    style={s.deleteBtn}
+                  >
+                    <Text style={s.deleteBtnText}>✕</Text>
+                  </TouchableOpacity>
                 </View>
               ))}
             </View>
@@ -169,6 +175,8 @@ const s = StyleSheet.create({
   historyLabel:   { fontSize: 13, fontWeight: '700', color: '#3A2A1A' },
   historyTime:    { fontSize: 11, color: '#A08060', marginTop: 2 },
   historyXp:      { fontSize: 13, fontWeight: '800', color: '#FF7A5C' },
+  deleteBtn:      { padding: 6, marginLeft: 4 },
+  deleteBtnText:  { fontSize: 14, color: '#C8A880', fontWeight: '700' },
 
   resetBtn:       { alignItems: 'center', marginTop: 8 },
   resetText:      { fontSize: 14, fontWeight: '700', color: '#FF7A5C' },
