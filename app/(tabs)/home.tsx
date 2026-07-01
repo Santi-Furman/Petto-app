@@ -9,7 +9,7 @@ import { usePetStore } from '../../store/petStore'
 import { SESSION_TYPES, xpProgressInLevel, xpToNextLevel } from '../../lib/xp'
 
 export default function Home() {
-  const { species, petName, mood, xp, level, coins, sessions, logSession, setMood, removeSession } = usePetStore()
+  const { species, petName, mood, xp, level, coins, sessions, accessory, logSession, setMood, removeSession } = usePetStore()
 
   const [undoTimer, setUndoTimer] = useState<ReturnType<typeof setTimeout> | null>(null)
   const [showUndo, setShowUndo]   = useState(false)
@@ -107,7 +107,7 @@ export default function Home() {
 
           {/* Mascota */}
           <View style={s.petWrapper}>
-            <PetViewer species={species} mood={mood} size={200} />
+            <PetViewer species={species} mood={mood} size={200} accessory={accessory} />
           </View>
 
           {/* Nombre y nivel */}

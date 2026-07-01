@@ -4,13 +4,15 @@ import { Penguin   } from './pets/Penguin'
 import { Hedgehog  } from './pets/Hedgehog'
 import { Leopard   } from './pets/Leopard'
 
-type Species = 'redpanda' | 'koala' | 'penguin' | 'hedgehog' | 'leopard'
-type Mood    = 'idle' | 'happy' | 'sad'
+type Species  = 'redpanda' | 'koala' | 'penguin' | 'hedgehog' | 'leopard'
+type Mood     = 'idle' | 'happy' | 'sad'
+type Accessory = 'none' | 'hat' | 'glasses' | 'crown' | 'scarf'
 
 type Props = {
-  species: Species
-  mood?:   Mood
-  size?:   number
+  species:    Species
+  mood?:      Mood
+  size?:      number
+  accessory?: Accessory
 }
 
 const PET_MAP = {
@@ -21,7 +23,7 @@ const PET_MAP = {
   leopard:  Leopard,
 }
 
-export function PetViewer({ species, mood = 'idle', size = 180 }: Props) {
+export function PetViewer({ species, mood = 'idle', size = 180, accessory = 'none' }: Props) {
   const PetComponent = PET_MAP[species]
-  return <PetComponent mood={mood} size={size} />
+  return <PetComponent mood={mood} size={size} accessory={accessory} />
 }
