@@ -6,13 +6,21 @@ import { usePetStore } from '../../store/petStore'
 import { ACCESSORIES } from '../../lib/xp'
 
 export default function Shop() {
-  const { coins, accessory, equipAccessory } = usePetStore()
+  const { coins, accessory, ownedAccessories, equipAccessory, buyAccessory } = usePetStore()
 
-  function handleBuy(item: typeof ACCESSORIES[number]) {
-    if (item.id === 'none') {
-      equipAccessory('none')
-      return
-    }
+  const equippedItem   = ACCESSORIES.find(item => item.id === accessory)
+  const ownedNotEquipped = ACCESSORIES.filter(
+    item => ownedAccessories.includes(item.id) && item.id !== accessory
+  )
+  const purchasable = ACCESSORIES.filter(
+    item => !ownedAccessories.includes(item.id)
+  )
+
+  function handleEquip(item: typeof ACCESSORIES[number]) {
+    equipAccessory(item.id as any)
+  }
+
+  function handlePurchase(item: typeof ACCESSORIES[number]) {
     if (coins < item.cost) {
       Alert.alert(
         'Monedas insuficientes 🪙',
@@ -21,7 +29,21 @@ export default function Shop() {
       )
       return
     }
-    equipAccessory(item.id as any)
+
+    Alert.alert(
+      `Comprar ${item.label}`,
+      `¿Comprar por ${item.cost} 🪙?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Comprar',
+          onPress: () => {
+            const success = buyAccessory(item.id as any, item.cost)
+            if (success) equipAccessory(item.id as any)
+          },
+        },
+      ]
+    )
   }
 
   return (
@@ -40,43 +62,73 @@ export default function Shop() {
           Equipá accesorios a tu Petto. Ganás monedas completando sesiones.
         </Text>
 
-        {/* Grid de accesorios */}
-        <Text style={s.sectionTitle}>Accesorios</Text>
-        <View style={s.grid}>
-          {ACCESSORIES.map(item => {
-            const isEquipped  = accessory === item.id
-            const canAfford   = coins >= item.cost || item.cost === 0
-            const isFree      = item.cost === 0
+        {/* Equipado */}
+        {equippedItem && (
+          <>
+            <Text style={s.sectionTitle}>Equipado</Text>
+            <View style={s.grid}>
+              <View style={[s.card, s.cardEquipped]}>
+                <Text style={s.cardIcon}>{equippedItem.icon}</Text>
+                <Text style={s.cardLabel}>{equippedItem.label}</Text>
+                <View style={s.equippedBadge}>
+                  <Text style={s.equippedText}>Equipado</Text>
+                </View>
+              </View>
+            </View>
+          </>
+        )}
 
-            return (
-              <TouchableOpacity
-                key={item.id}
-                style={[
-                  s.card,
-                  isEquipped  && s.cardEquipped,
-                  !canAfford  && s.cardLocked,
-                ]}
-                onPress={() => handleBuy(item)}
-                activeOpacity={0.75}
-              >
-                <Text style={s.cardIcon}>{item.icon}</Text>
-                <Text style={s.cardLabel}>{item.label}</Text>
+        {/* Comprados, sin equipar */}
+        {ownedNotEquipped.length > 0 && (
+          <>
+            <Text style={s.sectionTitle}>Tus accesorios</Text>
+            <View style={s.grid}>
+              {ownedNotEquipped.map(item => (
+                <TouchableOpacity
+                  key={item.id}
+                  style={s.card}
+                  onPress={() => handleEquip(item)}
+                  activeOpacity={0.75}
+                >
+                  <Text style={s.cardIcon}>{item.icon}</Text>
+                  <Text style={s.cardLabel}>{item.label}</Text>
+                  <View style={s.equipBadge}>
+                    <Text style={s.equipText}>Equipar</Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </>
+        )}
 
-                {isEquipped ? (
-                  <View style={s.equippedBadge}>
-                    <Text style={s.equippedText}>Equipado</Text>
-                  </View>
-                ) : (
-                  <View style={[s.costBadge, !canAfford && s.costBadgeLocked]}>
-                    <Text style={[s.costText, !canAfford && s.costTextLocked]}>
-                      {isFree ? 'Gratis' : `${item.cost} 🪙`}
-                    </Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            )
-          })}
-        </View>
+        {/* Por comprar */}
+        {purchasable.length > 0 && (
+          <>
+            <Text style={s.sectionTitle}>Por comprar</Text>
+            <View style={s.grid}>
+              {purchasable.map(item => {
+                const canAfford = coins >= item.cost
+
+                return (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={[s.card, !canAfford && s.cardLocked]}
+                    onPress={() => handlePurchase(item)}
+                    activeOpacity={0.75}
+                  >
+                    <Text style={s.cardIcon}>{item.icon}</Text>
+                    <Text style={s.cardLabel}>{item.label}</Text>
+                    <View style={[s.costBadge, !canAfford && s.costBadgeLocked]}>
+                      <Text style={[s.costText, !canAfford && s.costTextLocked]}>
+                        {item.cost} 🪙
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                )
+              })}
+            </View>
+          </>
+        )}
 
         {/* Info */}
         <View style={s.infoCard}>
@@ -105,7 +157,8 @@ const s = StyleSheet.create({
   coinText:        { fontSize: 13, fontWeight: '700', color: '#3A2A1A' },
   subtitle:        { fontSize: 14, color: '#A08060', lineHeight: 22, marginBottom: 24 },
 
-  sectionTitle:    { fontSize: 14, fontWeight: '800', color: '#3A2A1A', marginBottom: 12 },
+  sectionTitle:    { fontSize: 14, fontWeight: '800', color: '#3A2A1A', marginBottom: 12,
+                     marginTop: 4 },
 
   grid:            { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 24 },
   card:            { width: '47%', backgroundColor: '#FFFAF4', borderRadius: 18,
@@ -120,6 +173,10 @@ const s = StyleSheet.create({
   equippedBadge:   { backgroundColor: '#FF7A5C', borderRadius: 12,
                      paddingHorizontal: 12, paddingVertical: 4 },
   equippedText:    { fontSize: 11, fontWeight: '700', color: 'white' },
+
+  equipBadge:      { backgroundColor: '#F0E0CC', borderRadius: 12,
+                     paddingHorizontal: 12, paddingVertical: 4 },
+  equipText:       { fontSize: 11, fontWeight: '700', color: '#8B5E3C' },
 
   costBadge:       { backgroundColor: '#F0E0CC', borderRadius: 12,
                      paddingHorizontal: 12, paddingVertical: 4 },
