@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, SafeAreaView
 } from 'react-native'
+import * as Haptics from 'expo-haptics'
 import { PetViewer } from '../../components/PetViewer'
 import { usePetStore } from '../../store/petStore'
 import { SESSION_TYPES, xpProgressInLevel, xpToNextLevel } from '../../lib/xp'
@@ -10,8 +11,9 @@ import { SESSION_TYPES, xpProgressInLevel, xpToNextLevel } from '../../lib/xp'
 export default function Home() {
   const { species, petName, mood, xp, level, coins, sessions, logSession, setMood, removeSession } = usePetStore()
 
-  const [undoTimer, setUndoTimer] = useState<ReturnType<typeof setTimeout> | null>(null)  
+  const [undoTimer, setUndoTimer] = useState<ReturnType<typeof setTimeout> | null>(null)
   const [showUndo, setShowUndo]   = useState(false)
+  const prevLevel = useRef(level)
 
   // Vuelve a idle después de 3 segundos de happy
   useEffect(() => {
@@ -21,6 +23,14 @@ export default function Home() {
     }
   }, [mood])
 
+  // Detecta subida de nivel y dispara vibración de logro
+  useEffect(() => {
+    if (level > prevLevel.current) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+    }
+    prevLevel.current = level
+  }, [level])
+
   if (!species) return null
 
   const progress    = xpProgressInLevel(xp)
@@ -28,6 +38,8 @@ export default function Home() {
   const lastSession = sessions[0]
 
   function handleSession(st: typeof SESSION_TYPES[number]) {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+
     logSession({
       type:     st.id as any,
       label:    st.label,
