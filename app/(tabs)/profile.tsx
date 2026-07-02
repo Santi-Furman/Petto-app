@@ -7,9 +7,17 @@ import { usePetStore } from '../../store/petStore'
 import { PETS, xpProgressInLevel, xpToNextLevel } from '../../lib/xp'
 
 export default function Profile() {
-  const { species, petName, xp, level, coins, sessions, choosePet, removeSession } = usePetStore()
+  const { species, pets, choosePet, removeSession } = usePetStore()
 
-  const pet      = PETS.find(p => p.id === species)
+  const activePet  = species ? pets[species] : null
+  const petInfo    = PETS.find(p => p.id === species)
+
+  const petName  = activePet?.petName  ?? ''
+  const xp       = activePet?.xp       ?? 0
+  const level    = activePet?.level    ?? 1
+  const coins    = activePet?.coins    ?? 0
+  const sessions = activePet?.sessions ?? []
+
   const progress = xpProgressInLevel(xp)
   const xpToNext = xpToNextLevel(xp)
 
@@ -22,6 +30,8 @@ export default function Profile() {
     choosePet('' as any, '')
     router.replace('/onboarding/pick-pet')
   }
+
+  if (!species || !activePet) return null
 
   return (
     <SafeAreaView style={s.container}>
@@ -36,7 +46,7 @@ export default function Profile() {
             <View style={s.petDot} />
             <View>
               <Text style={s.petName}>{petName}</Text>
-              <Text style={s.petType}>{pet?.type}</Text>
+              <Text style={s.petType}>{petInfo?.type}</Text>
             </View>
           </View>
 
@@ -55,10 +65,10 @@ export default function Profile() {
         <Text style={s.sectionTitle}>Estadísticas</Text>
         <View style={s.statsGrid}>
           {[
-            { label: 'XP total',   value: xp,              icon: '⭐' },
-            { label: 'Nivel',      value: level,            icon: '🏆' },
-            { label: 'Monedas',    value: coins,            icon: '🪙' },
-            { label: 'Sesiones',   value: sessions.length,  icon: '📅' },
+            { label: 'XP total',  value: xp,             icon: '⭐' },
+            { label: 'Nivel',     value: level,           icon: '🏆' },
+            { label: 'Monedas',   value: coins,           icon: '🪙' },
+            { label: 'Sesiones',  value: sessions.length, icon: '📅' },
           ].map(stat => (
             <View key={stat.label} style={s.statCard}>
               <Text style={s.statIcon}>{stat.icon}</Text>
@@ -133,51 +143,52 @@ export default function Profile() {
 }
 
 const s = StyleSheet.create({
-  container:      { flex: 1, backgroundColor: '#FDF6ED' },
-  scroll:         { padding: 20, paddingBottom: 48 },
+  container:        { flex: 1, backgroundColor: '#FDF6ED' },
+  scroll:           { padding: 20, paddingBottom: 48 },
 
-  title:          { fontSize: 26, fontWeight: '900', color: '#3A2A1A', marginBottom: 20 },
+  title:            { fontSize: 26, fontWeight: '900', color: '#3A2A1A', marginBottom: 20 },
 
-  card:           { backgroundColor: '#FFFAF4', borderRadius: 18, borderWidth: 1,
-                    borderColor: '#F0E0CC', padding: 18, marginBottom: 20 },
+  card:             { backgroundColor: '#FFFAF4', borderRadius: 18, borderWidth: 1,
+                      borderColor: '#F0E0CC', padding: 18, marginBottom: 20 },
 
-  petInfo:        { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 },
-  petDot:         { width: 12, height: 12, borderRadius: 6, backgroundColor: '#FF7A5C' },
-  petName:        { fontSize: 18, fontWeight: '800', color: '#3A2A1A' },
-  petType:        { fontSize: 12, color: '#A08060', marginTop: 2 },
+  petInfo:          { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 },
+  petDot:           { width: 12, height: 12, borderRadius: 6, backgroundColor: '#FF7A5C' },
+  petName:          { fontSize: 18, fontWeight: '800', color: '#3A2A1A' },
+  petType:          { fontSize: 12, color: '#A08060', marginTop: 2 },
 
-  xpRow:          { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
-  xpLabel:        { fontSize: 12, fontWeight: '700', color: '#A08060' },
-  xpTrack:        { height: 10, backgroundColor: '#F0E0CC', borderRadius: 10,
-                    overflow: 'hidden', marginBottom: 6 },
-  xpFill:         { height: '100%', backgroundColor: '#FF7A5C', borderRadius: 10 },
-  xpSub:          { fontSize: 11, color: '#A08060' },
+  xpRow:            { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
+  xpLabel:          { fontSize: 12, fontWeight: '700', color: '#A08060' },
+  xpTrack:          { height: 10, backgroundColor: '#F0E0CC', borderRadius: 10,
+                      overflow: 'hidden', marginBottom: 6 },
+  xpFill:           { height: '100%', backgroundColor: '#FF7A5C', borderRadius: 10 },
+  xpSub:            { fontSize: 11, color: '#A08060' },
 
-  sectionTitle:   { fontSize: 14, fontWeight: '800', color: '#3A2A1A', marginBottom: 12 },
+  sectionTitle:     { fontSize: 14, fontWeight: '800', color: '#3A2A1A', marginBottom: 12 },
 
-  statsGrid:      { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 24 },
-  statCard:       { width: '47%', backgroundColor: '#FFFAF4', borderRadius: 16,
-                    borderWidth: 1, borderColor: '#F0E0CC', padding: 16, alignItems: 'center', gap: 4 },
-  statIcon:       { fontSize: 24 },
-  statValue:      { fontSize: 22, fontWeight: '900', color: '#FF7A5C' },
-  statLabel:      { fontSize: 11, color: '#A08060' },
+  statsGrid:        { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 24 },
+  statCard:         { width: '47%', backgroundColor: '#FFFAF4', borderRadius: 16,
+                      borderWidth: 1, borderColor: '#F0E0CC', padding: 16,
+                      alignItems: 'center', gap: 4 },
+  statIcon:         { fontSize: 24 },
+  statValue:        { fontSize: 22, fontWeight: '900', color: '#FF7A5C' },
+  statLabel:        { fontSize: 11, color: '#A08060' },
 
-  typeRow:        { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
-  typeLabel:      { fontSize: 12, fontWeight: '600', color: '#3A2A1A', width: 70 },
-  typeBarTrack:   { flex: 1, height: 6, backgroundColor: '#F0E0CC',
-                    borderRadius: 6, overflow: 'hidden' },
-  typeBarFill:    { height: '100%', backgroundColor: '#FF7A5C', borderRadius: 6 },
-  typeCount:      { fontSize: 12, fontWeight: '700', color: '#A08060', width: 20, textAlign: 'right' },
+  typeRow:          { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
+  typeLabel:        { fontSize: 12, fontWeight: '600', color: '#3A2A1A', width: 70 },
+  typeBarTrack:     { flex: 1, height: 6, backgroundColor: '#F0E0CC',
+                      borderRadius: 6, overflow: 'hidden' },
+  typeBarFill:      { height: '100%', backgroundColor: '#FF7A5C', borderRadius: 6 },
+  typeCount:        { fontSize: 12, fontWeight: '700', color: '#A08060', width: 20, textAlign: 'right' },
 
-  historyRow:     { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 },
+  historyRow:       { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 },
   historyRowBorder: { borderBottomWidth: 1, borderBottomColor: '#F0E0CC' },
-  historyIcon:    { fontSize: 20 },
-  historyLabel:   { fontSize: 13, fontWeight: '700', color: '#3A2A1A' },
-  historyTime:    { fontSize: 11, color: '#A08060', marginTop: 2 },
-  historyXp:      { fontSize: 13, fontWeight: '800', color: '#FF7A5C' },
-  deleteBtn:      { padding: 6, marginLeft: 4 },
-  deleteBtnText:  { fontSize: 14, color: '#C8A880', fontWeight: '700' },
+  historyIcon:      { fontSize: 20 },
+  historyLabel:     { fontSize: 13, fontWeight: '700', color: '#3A2A1A' },
+  historyTime:      { fontSize: 11, color: '#A08060', marginTop: 2 },
+  historyXp:        { fontSize: 13, fontWeight: '800', color: '#FF7A5C' },
+  deleteBtn:        { padding: 6, marginLeft: 4 },
+  deleteBtnText:    { fontSize: 14, color: '#C8A880', fontWeight: '700' },
 
-  resetBtn:       { alignItems: 'center', marginTop: 8 },
-  resetText:      { fontSize: 14, fontWeight: '700', color: '#FF7A5C' },
+  resetBtn:         { alignItems: 'center', marginTop: 8 },
+  resetText:        { fontSize: 14, fontWeight: '700', color: '#FF7A5C' },
 })

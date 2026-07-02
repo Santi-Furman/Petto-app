@@ -6,14 +6,19 @@ import { usePetStore } from '../../store/petStore'
 import { ACCESSORIES } from '../../lib/xp'
 
 export default function Shop() {
-  const { coins, accessory, ownedAccessories, equipAccessory, buyAccessory } = usePetStore()
+  const { species, pets, equipAccessory, buyAccessory } = usePetStore()
 
-  const equippedItem   = ACCESSORIES.find(item => item.id === accessory)
+  const pet             = species ? pets[species] : null
+  const coins           = pet?.coins           ?? 0
+  const accessory       = pet?.accessory       ?? 'none'
+  const ownedAccessories = pet?.ownedAccessories ?? ['none']
+
+  const equippedItem     = ACCESSORIES.find(item => item.id === accessory)
   const ownedNotEquipped = ACCESSORIES.filter(
-    item => ownedAccessories.includes(item.id) && item.id !== accessory
+    item => ownedAccessories.includes(item.id as any) && item.id !== accessory
   )
   const purchasable = ACCESSORIES.filter(
-    item => !ownedAccessories.includes(item.id)
+    item => !ownedAccessories.includes(item.id as any)
   )
 
   function handleEquip(item: typeof ACCESSORIES[number]) {
@@ -46,6 +51,8 @@ export default function Shop() {
     )
   }
 
+  if (!species || !pet) return null
+
   return (
     <SafeAreaView style={s.container}>
       <ScrollView contentContainerStyle={s.scroll}>
@@ -63,7 +70,7 @@ export default function Shop() {
         </Text>
 
         {/* Equipado */}
-        {equippedItem && (
+        {equippedItem && equippedItem.id !== 'none' && (
           <>
             <Text style={s.sectionTitle}>Equipado</Text>
             <View style={s.grid}>
@@ -108,7 +115,6 @@ export default function Shop() {
             <View style={s.grid}>
               {purchasable.map(item => {
                 const canAfford = coins >= item.cost
-
                 return (
                   <TouchableOpacity
                     key={item.id}

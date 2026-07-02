@@ -9,10 +9,20 @@ import { usePetStore } from '../../store/petStore'
 import { SESSION_TYPES, xpProgressInLevel, xpToNextLevel } from '../../lib/xp'
 
 export default function Home() {
-  const { species, petName, mood, xp, level, coins, sessions, accessory, logSession, setMood, removeSession } = usePetStore()
+  const { species, mood, pets, logSession, setMood, removeSession } = usePetStore()
 
   const [undoTimer, setUndoTimer] = useState<ReturnType<typeof setTimeout> | null>(null)
   const [showUndo, setShowUndo]   = useState(false)
+
+  // Leer progreso de la mascota activa
+  const pet       = species ? pets[species] : null
+  const petName   = pet?.petName   ?? ''
+  const accessory = pet?.accessory ?? 'none'
+  const xp        = pet?.xp        ?? 0
+  const level     = pet?.level     ?? 1
+  const coins     = pet?.coins     ?? 0
+  const sessions  = pet?.sessions  ?? []
+
   const prevLevel = useRef(level)
 
   // Vuelve a idle después de 3 segundos de happy
@@ -31,7 +41,7 @@ export default function Home() {
     prevLevel.current = level
   }, [level])
 
-  if (!species) return null
+  if (!species || !pet) return null
 
   const progress    = xpProgressInLevel(xp)
   const xpToNext    = xpToNextLevel(xp)
